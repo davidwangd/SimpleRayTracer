@@ -1,0 +1,10 @@
+*.vxcproj
+*.vxcproj*
+*.sln
+*.sln*
+*.slo
+*.slo*
+*.test
+*.txt
+Debug*
+Release*
