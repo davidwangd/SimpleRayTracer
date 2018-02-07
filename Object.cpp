@@ -14,13 +14,12 @@ glm::vec3 Object::getColor(const Ray &pray, const glm::vec4& point, int depth){
 		Ray ray;
 		ray.pos = point;
 		ray.direction = glm::normalize( light.isSpotted ? light.v - point : -light.v);
-		Object* hit = 0;
+		ray.pos = point + 1e-3f * ray.direction;
 		int v = 1;
-		float dis = 1e20;
+		float dis = 1e20f;
 		for (Object* object : tracer -> objects){
 			float cur = object -> hitPoint(ray);
 			if (cur > eps && cur < dis){
-				hit = object;
 				dis = cur;
 				if (light.isSpotted || dis < glm::length(light.v - point)){
 					v = 0;

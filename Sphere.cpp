@@ -18,7 +18,7 @@ float Sphere::hitPoint(const Ray &ray){
 }
 
 glm::vec4 Sphere::getNormal(const glm::vec4& hitPoint){
-	return isTransformed ? trans * (inv * hitPoint - inv * center) : hitPoint - center;
+	return isTransformed ? glm::transpose(inv) * (inv * hitPoint - inv * center) : hitPoint - center;
 }
 
 Sphere::Sphere(const glm::vec4 &center, float r){

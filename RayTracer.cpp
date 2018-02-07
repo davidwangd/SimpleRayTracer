@@ -29,7 +29,7 @@ void RayTracer::setCamera(const glm::vec3 &eye, const glm::vec3 &center, const g
 Ray RayTracer::castRay(int x, int y){
 	Ray ret;
 	ret.pos = glm::vec4(0,0,0,1);
-	ret.direction = glm::normalize(glm::vec4(glm::tan(fovx/2)*(x-(width/2))/(width/2), glm::tan(fovy/2)*((height/2)-y)/(height/2),-1,0));
+	ret.direction = glm::normalize(glm::vec4(glm::tan(fovx/2)*(x-(width/2)+0.5)/(width/2+0.5), glm::tan(fovy/2)*((height/2)-y+0.5)/(height/2+0.5),-1,0));
 	return ret;
 }
 
@@ -49,7 +49,8 @@ void RayTracer::calculate(){
 		for (int y = 0; y < height; y++){
 			Ray ray = castRay(x, y);
 #ifdef DEBUG
-//			printf("[%.3f, %.3f, %.3f] -> [%.3f, %.3f, %.3f]\n", ray.pos.x, ray.pos.y, ray.pos.z, ray.direction.x, ray.direction.y, ray.direction.z);
+	if ((x == 0 || x == width/2 || x == width - 1) && (y == 0 || y == height/2 || y == height - 1))
+			printf("[%.3f, %.3f, %.3f] -> [%.3f, %.3f, %.3f]\n", ray.pos.x, ray.pos.y, ray.pos.z, ray.direction.x, ray.direction.y, ray.direction.z);
 #endif
 			Object* hit = 0;
 			float dis = 1e20;
@@ -64,6 +65,7 @@ void RayTracer::calculate(){
 				grid[x][y] = glm::vec3(0,0,0);
 			}else{
 				glm::vec4 point = ray.pos + dis * ray.direction;
+			//	printf("Hit: dis = %.3f [%.3f, %.3f, %.3f %.3f]\n",dis, point.x, point.y, point.z, point.w);
 				grid[x][y] = hit -> getColor(ray, point, maxDetph);
 			}
 		}
@@ -82,6 +84,9 @@ void RayTracer::dump(const char *filename){
 				fprintf(file, "%f ", grid[i][j][k]);
 			fprintf(file, "\n");
 		}
+	fclose(file);
+	system("python show.py");
+	system("pause");
 }
 
 RayTracer::~RayTracer(){
@@ -102,7 +107,7 @@ bool readvals(stringstream &s, const int numvals, float* values)
 	return true; 
 }
 
-void RayTracer::readfile(const char *filename){
+void RayTracer::readfile(const char *filename){ 
 	printf("Start Read File");
 	ifstream in;
 	in.open(filename);
@@ -123,7 +128,6 @@ void RayTracer::readfile(const char *filename){
 	save = string("output.txt");
 	material.ambient = glm::vec3(0.2, 0.2, 0.2);
 	while (getline(in, str)){
-		printf("processing %s\n", str.c_str());
 		stringstream s(str);
 		if (!(s >> cmd)) continue;
 		float numbers[20];
@@ -145,14 +149,13 @@ void RayTracer::readfile(const char *filename){
 			readvals(s, 1, numbers);
 			maxDetph = (int)(0.5+numbers[0]);
 		}else if (cmd == "output"){
-			s >> save;
+		//	s >> save;
 		}else if (cmd == "sphere"){
 			readvals(s, 4, numbers);
 			glm::vec4 pos = glm::vec4(numbers[0], numbers[1], numbers[2], 1);
 			Object *sphere = new Sphere(pos, numbers[3]);
 			sphere -> setTransform(camera * matStack.top());
 			sphere -> setMatertial(material);
-			material.ambient = glm::vec3(0.2, 0.2, 0.2);
 			this -> addObject(sphere);
 		}else if (cmd == "tri"){
 			readvals(s, 3, numbers);
@@ -161,12 +164,25 @@ void RayTracer::readfile(const char *filename){
 			int c = (int)(numbers[2] + 0.5);
 			glm::mat4 m = camera * matStack.top();
 			Object *tri = new Triangle(m * points[a], m * points[b], m * points[c]);
+			for (int i = 0;i < 4;i++){
+				for (int j = 0;j < 4;j++)
+					printf("%.3f ", m[i][j]);
+				printf("\n");
+			}
+			glm::vec4 A = m * points[a];
+			glm::vec4 B = m * points[b];
+			glm::vec4 C = m * points[c];
+			printf("X: %.3f %.3f %.3f\n", A.x, A.y, A.z);
+			printf("Y: %.3f %.3f %.3f\n", B.x, B.y, B.z);
+			printf("Z: %.3f %.3f %.3f\n", C.x, C.y, C.z);
+			printf("Color1 : %.3f %.3f %.3f\n", material.ambient.x, material.ambient.y, material.ambient.z);
+			printf("Color2 : %.3f %.3f %.3f\n\n", material.emmission.x, material.emmission.y, material.emmission.z);
 			tri -> setMatertial(material);
-			material.ambient = glm::vec3(0.2, 0.2, 0.2);
+			tri -> removeTransform();
 			this -> addObject(tri);
 		}else if (cmd == "vertex"){
 			readvals(s, 3, numbers);
-			points.push_back(matStack.top() * glm::vec4(numbers[0], numbers[1], numbers[2], 1));
+			points.push_back(glm::vec4(numbers[0], numbers[1], numbers[2], 1));
 		}else if (cmd == "translate"){
 			readvals(s, 3, numbers);
 			matStack.top() = glm::translate(matStack.top(), glm::vec3(numbers[0], numbers[1], numbers[2]));
