@@ -164,19 +164,9 @@ void RayTracer::readfile(const char *filename){
 			int c = (int)(numbers[2] + 0.5);
 			glm::mat4 m = camera * matStack.top();
 			Object *tri = new Triangle(m * points[a], m * points[b], m * points[c]);
-			for (int i = 0;i < 4;i++){
-				for (int j = 0;j < 4;j++)
-					printf("%.3f ", m[i][j]);
-				printf("\n");
-			}
 			glm::vec4 A = m * points[a];
 			glm::vec4 B = m * points[b];
 			glm::vec4 C = m * points[c];
-			printf("X: %.3f %.3f %.3f\n", A.x, A.y, A.z);
-			printf("Y: %.3f %.3f %.3f\n", B.x, B.y, B.z);
-			printf("Z: %.3f %.3f %.3f\n", C.x, C.y, C.z);
-			printf("Color1 : %.3f %.3f %.3f\n", material.ambient.x, material.ambient.y, material.ambient.z);
-			printf("Color2 : %.3f %.3f %.3f\n\n", material.emmission.x, material.emmission.y, material.emmission.z);
 			tri -> setMatertial(material);
 			tri -> removeTransform();
 			this -> addObject(tri);
@@ -198,13 +188,13 @@ void RayTracer::readfile(const char *filename){
 			matStack.pop();
 		}else if (cmd == "directional"){
 			readvals(s, 6, numbers);
-			light.v = glm::vec4(numbers[0], numbers[1], numbers[2], 0);
+			light.v = camera * glm::vec4(numbers[0], numbers[1], numbers[2], 0);
 			light.color = glm::vec3(numbers[3], numbers[4], numbers[5]);
 			light.isSpotted = 0;
 			this -> addLightSource(light);
 		}else if (cmd == "point"){
 			readvals(s, 6, numbers);
-			light.v = glm::vec4(numbers[0], numbers[1], numbers[2], 0);
+			light.v = camera * glm::vec4(numbers[0], numbers[1], numbers[2], 1);
 			light.color = glm::vec3(numbers[3], numbers[4], numbers[5]);
 			light.isSpotted = 1;
 			this -> addLightSource(light);

@@ -1,9 +1,9 @@
 #include "Object.h"
 #include "RayTracer.h"
 #include <cmath>
-
-inline glm::vec3 power(const glm::vec3 &a, float s){
-	return glm::vec3(pow(a.x, s), pow(a.y, s), pow(a.z, s));
+#include <cstdio>
+inline float max(float a, float b){
+	return a > b ? a : b;
 }
 
 glm::vec3 Object::getColor(const Ray &pray, const glm::vec4& point, int depth){
@@ -17,20 +17,40 @@ glm::vec3 Object::getColor(const Ray &pray, const glm::vec4& point, int depth){
 		ray.pos = point + 1e-3f * ray.direction;
 		int v = 1;
 		float dis = 1e20f;
+		float len = glm::length(light.v - point);
 		for (Object* object : tracer -> objects){
 			float cur = object -> hitPoint(ray);
 			if (cur > eps && cur < dis){
 				dis = cur;
-				if (light.isSpotted || dis < glm::length(light.v - point)){
+				if (!light.isSpotted || dis < len){
 					v = 0;
 					break;
 				}
 			}	
 		}
 		if (v){
-			ret = ret + ((d3dot(normal, ray.direction)) * material.diffuse 
-				+ (d3dot(normal, glm::normalize(ray.direction - pray.direction)) * power(material.specular, material.shiniss)))
-				* light.color / (light.c0 + light.c1 * dis + light.c2*dis*dis);
+			ret = ret + mixcolor( ((max(0, d3dot(normal, ray.direction))) * material.diffuse 
+				+ (pow(max(0, d3dot(normal, glm::normalize(ray.direction - pray.direction))), material.shiniss)) * material.specular) 
+				, light.color / (light.isSpotted ? (light.c0 + light.c1 * dis + light.c2*dis*dis) : 1));
+		}
+	}
+	if (depth){
+		Ray ray;
+		ray.pos = point;
+		ray.direction = glm::normalize(- 2.f * d3dot(normal, pray.direction) * normal + pray.direction);
+		ray.pos = ray.pos + 0.001f * ray.direction;
+		Object* hit = nullptr;
+		float dis = 1e20f;
+		for (Object* object : tracer -> objects){
+			float cur = object -> hitPoint(ray);
+			if (cur > eps && cur < dis){
+				dis = cur;
+				hit = object;
+			}	
+		}
+		if (hit != nullptr){
+			glm::vec4 newpoint = ray.pos + dis * ray.direction;
+			ret = ret + mixcolor(material.specular, hit ->getColor(ray, newpoint, depth - 1));
 		}
 	}
 	return ret;

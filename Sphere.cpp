@@ -17,8 +17,10 @@ float Sphere::hitPoint(const Ray &ray){
 	return -1;
 }
 
+// 这里的hitPoint是真实坐标
 glm::vec4 Sphere::getNormal(const glm::vec4& hitPoint){
-	return isTransformed ? glm::transpose(inv) * (inv * hitPoint - inv * center) : hitPoint - center;
+	glm::vec3 normal = isTransformed ? glm::transpose(inv) * (inv * hitPoint - center) : hitPoint - center;
+	return glm::vec4(glm::normalize(normal), 0);
 }
 
 Sphere::Sphere(const glm::vec4 &center, float r){

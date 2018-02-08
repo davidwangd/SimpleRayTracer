@@ -22,5 +22,5 @@ for i in range(int(size[0])):
 		a3 = int(float(t[2])*255)
 		#print(a1, " ", a2, " ", a3)
 		pixel[i, j] = (pro(a1), pro(a2), pro(a3))
-img.save("x.png")
 img.show()
+img.save("scene1.png")

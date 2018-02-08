@@ -5,8 +5,6 @@ Triangle::Triangle(const glm::vec4 &a, const glm::vec4 &b, const glm::vec4 &c){
 	this -> b = b;
 	this -> c = c;
 	this -> n = glm::normalize(d3cross(b-a, c-a));
-
-	printf("Object Normal: [%3.f, %.3f, %.3f. %.3f]\n", n.x, n.y, n.z, n.w);
 }
 
 Triangle::Triangle(const glm::vec4 &a, const glm::vec4 &b, const glm::vec4 &c, const glm::vec4 &n){
